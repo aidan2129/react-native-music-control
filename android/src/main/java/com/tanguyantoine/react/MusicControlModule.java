@@ -136,7 +136,7 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
                     INSTANCE.session.getController().getTransportControls().pause();
                 } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
                     // Lower the volume, keep playing
-                    INSTANCE.session.getController().getTransportControls().pause();
+                    // INSTANCE.session.getController().getTransportControls().pause();
                 } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
                     // Your app has been granted audio focus again
                     // Raise volume to normal, restart playback if necessary
@@ -274,12 +274,6 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
             nb.setLargeIcon(null);
         }
 
-
-        // Request audio focus
-        ReactApplicationContext context = getReactApplicationContext();
-        AudioManager am = (AudioManager) context.getSystemService(context.AUDIO_SERVICE);
-        am.requestAudioFocus(afChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-
         session.setMetadata(md.build());
         session.setActive(true);
         notification.show(nb, isPlaying);
@@ -317,6 +311,13 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
         session.setPlaybackState(state);
 
         session.setRatingType(ratingType);
+
+        // Request audio focus
+        if (isPlaying) {
+            ReactApplicationContext context = getReactApplicationContext();
+            AudioManager am = (AudioManager) context.getSystemService(context.AUDIO_SERVICE);
+            am.requestAudioFocus(afChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        }
 
         if(remoteVolume) {
             session.setPlaybackToRemote(volume.create(null, maxVol, vol));
