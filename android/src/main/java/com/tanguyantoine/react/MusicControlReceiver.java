@@ -9,6 +9,8 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
+import android.media.AudioManager;
+
 public class MusicControlReceiver extends BroadcastReceiver {
 
     private final MusicControlModule module;
@@ -49,6 +51,13 @@ public class MusicControlReceiver extends BroadcastReceiver {
             KeyEvent ke = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
             module.session.getController().dispatchMediaButtonEvent(ke);
 
+        } else if(AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(action)) {
+
+            if(!checkApp(intent)) return;
+
+            // Pause the playback on the user unplugging their earphones
+            KeyEvent ke = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE);
+            module.session.getController().dispatchMediaButtonEvent(ke);
         }
     }
 
