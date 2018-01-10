@@ -228,7 +228,9 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
         md.putText(MediaMetadataCompat.METADATA_KEY_DISPLAY_DESCRIPTION, description);
         md.putText(MediaMetadataCompat.METADATA_KEY_DATE, date);
         md.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration);
-        md.putRating(MediaMetadataCompat.METADATA_KEY_RATING, rating);
+        if (android.os.Build.VERSION.SDK_INT > 19) {
+            md.putRating(MediaMetadataCompat.METADATA_KEY_RATING, rating);
+        }
 
         nb.setContentTitle(title);
         nb.setContentText(artist);
