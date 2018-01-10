@@ -140,7 +140,7 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
                 } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
                     // Your app has been granted audio focus again
                     // Raise volume to normal, restart playback if necessary
-                    INSTANCE.session.getController().getTransportControls().play();
+                    //INSTANCE.session.getController().getTransportControls().play();
                 }
             }
         };
