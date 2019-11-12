@@ -10,6 +10,8 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
+import android.media.AudioManager;
+
 public class MusicControlReceiver extends BroadcastReceiver {
 
     private final MusicControlModule module;
@@ -51,9 +53,7 @@ public class MusicControlReceiver extends BroadcastReceiver {
             module.session.getController().dispatchMediaButtonEvent(ke);
 
         } else if(AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(action)) {
-
             module.session.getController().getTransportControls().pause();
-
         }
     }
 

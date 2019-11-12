@@ -55,7 +55,7 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
     private MusicControlVolumeListener volume;
     private MusicControlReceiver receiver;
     private MusicControlEventEmitter emitter;
-    private MusicControlAudioFocusListener afListener;
+    private AudioManager.OnAudioFocusChangeListener afChangeListener;
 
     private Thread artworkThread;
 
@@ -187,16 +187,28 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
         receiver = new MusicControlReceiver(this, context);
         context.registerReceiver(receiver, filter);
 
-        Intent myIntent = new Intent(context, MusicControlNotification.NotificationService.class);
+        // Setup audio focus listener
+        afChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+            public void onAudioFocusChange(int focusChange) {
+                if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+                    // Permanent loss of audio focus
+                    // Pause playback immediately
+                    INSTANCE.session.getController().getTransportControls().pause();
+                } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+                    // Pause playback
+                    INSTANCE.session.getController().getTransportControls().pause();
+                } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+                    // Lower the volume, keep playing
+                    // INSTANCE.session.getController().getTransportControls().pause();
+                } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+                    // Your app has been granted audio focus again
+                    // Raise volume to normal, restart playback if necessary
+                    //INSTANCE.session.getController().getTransportControls().play();
+                }
+            }
+        };
 
-        afListener = new MusicControlAudioFocusListener(context, emitter, volume);
-
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-            context.startForegroundService(myIntent);
-
-        }
-        else
-            context.startService(myIntent);
+        context.startService(new Intent(context, MusicControlNotification.NotificationService.class));
 
         context.registerComponentCallbacks(this);
 
@@ -218,14 +230,18 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
         context.unregisterReceiver(receiver);
         context.unregisterComponentCallbacks(this);
 
-        if (artworkThread != null && artworkThread.isAlive())
-            artworkThread.interrupt();
+        // Abandon focus
+        AudioManager am = (AudioManager) context.getSystemService( context.AUDIO_SERVICE);
+        am.abandonAudioFocus(afChangeListener);
+
+        if(artworkThread != null && artworkThread.isAlive()) artworkThread.interrupt();
         artworkThread = null;
 
         session = null;
         notification = null;
         volume = null;
         receiver = null;
+        afChangeListener = null;
         state = null;
         md = null;
         pb = null;
@@ -381,6 +397,13 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
         session.setPlaybackState(state);
 
         session.setRatingType(ratingType);
+
+        // Request audio focus
+        if (isPlaying) {
+            ReactApplicationContext context = getReactApplicationContext();
+            AudioManager am = (AudioManager) context.getSystemService(context.AUDIO_SERVICE);
+            am.requestAudioFocus(afChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        }
 
         if(remoteVolume) {
             session.setPlaybackToRemote(volume.create(null, maxVol, vol));
